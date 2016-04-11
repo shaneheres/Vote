@@ -1,12 +1,12 @@
-# Vote
-## version 0.1
-Customizable voting extension for MediaWiki, with results usable by the Semantic MediaWiki extension.<br>
+# Vote version 0.1
+Customizable voting extension for MediaWiki. Results can be queryed with Semantic MediaWiki extension. (Though SMW is not required.)<br>
 Original code based off the VoteNY extension.
 
 Image shows 3 different bars easily created with Vote extension.<br>
 ![Alt text](/Untitled.png?raw=true "Optional Title")
 
 ## How to install
+* You will need an icon font like [Font Awesome](http://fortawesome.github.io/Font-Awesome/) or [Glypicons](http://glyphicons.bootstrapcheatsheets.com/)
 * Add Vote folder to your mediawiki/extensions/ folder.
 * Add table to mysql database:
 ```mysql
@@ -93,7 +93,7 @@ When any user makes a vote, the data gets edited (hacked) into the bottom of the
 <!--Vote-Rating-->{{#set:Rating=100.00|Rating votes=1}}<!--end-->
 ```
 It's invisible to readers, but page editor could modify it, though it would be reset whenever someone else voted.<br>
-Currently you can only querry the data with SMW. I may add some options to the Vote extension later.<br>
+Currently you can only querry the data with SMW. They have lot's of useful [query formats](https://www.semantic-mediawiki.org/wiki/Help:Result_formats) including a [Custom template](https://www.semantic-mediawiki.org/wiki/Help:Template_format) format.<br>
 To querry with SMW:
 ```wiki
 {{#ask:
@@ -102,3 +102,4 @@ To querry with SMW:
 |?Rating votes
 }}
 ```
+
