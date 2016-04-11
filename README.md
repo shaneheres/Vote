@@ -1,5 +1,6 @@
 # Vote
-Customizable voting extension for MediaWiki, with results usable by the Semantic MediaWiki extension.
+Customizable voting extension for MediaWiki, with results usable by the Semantic MediaWiki extension.<br>
+Original code based off the VoteNY extension.
 
 Image shows 3 different bars easily created with Vote extension.<br>
 ![Alt text](/Untitled.png?raw=true "Optional Title")
