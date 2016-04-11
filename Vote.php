@@ -2,7 +2,7 @@
 // Extension credits that show up on Special:Version
 $wgExtensionCredits['semantic'][] = array(
 	'name' => "Vote",
-	'url' => "https://github.com/shaneheres/semantic_vote",
+	'url' => "https://github.com/shaneheres/Vote",
 	'description' => 'Allows users to vote on attributes.',
 	'version' => '0.1',
 	'author' => "[https://github.com/shaneheres/ Shane Heres]",
