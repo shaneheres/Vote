@@ -1,4 +1,5 @@
 # Vote
+## version 0.1
 Customizable voting extension for MediaWiki, with results usable by the Semantic MediaWiki extension.<br>
 Original code based off the VoteNY extension.
 
@@ -50,15 +51,21 @@ $wgVoteAttributes['Favorite 2'] = array('id'=>100, 'style'=>'Favorite');
 ```
 
 ## How to add more styles
-The extension has two pre made styles that can be used: Favorite (a single star icon) and Nero (a thumbs up icon and a thumbs down icon.<br>
+The extension has two pre made styles that can be used: Favorite (a single star icon) and Nero (a thumbs up & thumbs down icon).<br>
 To add (or remove) more styles, modify $wgVoteStyles in LocalSettings.php
 ```php
 $wgVoteStyles['Faces'] = array( // Use a unique name for the style.
 // Each button must have a 'title', 'class', and 'color' option.
 	array(
-		'title'=>'Great', // Text that shows up when this button is hovered over.
-		'class'=>'emo emo-heartdowneyes', // An image class used for the button (Font Awesome, Glyphicons...)
-		'color'=>'vote-green'), // A color class to use for select buttons. (vote-red, green, blue, and yellow are available. leave blank for black)
+		// Text that shows up on button hover.
+		'title'=>'Great',
+		// Icon class used for button image. Use with Font Awesome, Glyphicon, or whatever...
+		// (http://fortawesome.github.io/Font-Awesome/icon/star/)
+		'class'=>'emo emo-heartdowneyes',
+		// A class added to selected option. (Usually just to change buttons color.)
+		// Pre built classes: vote-red, vote-green, vote-blue, vote-yellow.
+		// Use "" to keep it black.
+		'color'=>'vote-green')
 	array(
 		'title'=>'Good',
 		'class'=>'emo emo-blush',
