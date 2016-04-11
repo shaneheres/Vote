@@ -1,0 +1,18 @@
+CREATE TABLE /*_*/vote (
+  -- meh
+  `incremental` int(11) NOT NULL auto_increment PRIMARY KEY,
+  -- User ID
+  `id_user` int(11) NOT NULL default '0',
+  -- ID of the page
+  `id_page` int(11) NOT NULL default '0',
+  -- ID of the attribute
+  `id_attribute` int(11) NOT NULL default '0',
+  -- ID of the vote
+  `id_vote` int(11) NOT NULL default '0',
+  -- Timestamp when the vote was cast
+  `vote_date` datetime NOT NULL default CURRENT_TIMESTAMP,
+) /*$wgDBTableOptions*/;
+
+CREATE INDEX vote_page_id_index ON /*_*/vote (id_page);
+CREATE INDEX valueidx ON /*_*/vote (id_attribute);
+CREATE INDEX vote_date ON /*_*/vote (vote_date);

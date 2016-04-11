@@ -1,0 +1,53 @@
+.vote-unselected {
+	transition: opacity 0.2s ease;
+	opacity:0.4;
+    color:black;
+}
+.vote-unselected:hover {
+	opacity:0.75;
+    color:black;
+}
+.vote-selected {
+	transition: opacity 0.2s ease;
+	opacity:1;
+	-webkit-animation: scalezor 0.2s ease-in-out 1 normal;
+}
+.vote-blue {
+    color:#75caeb;
+}
+.vote-green {
+    color:#4ad0a1;
+}
+.vote-red {
+    color:#fb756e;
+}
+.vote-yellow {
+    color:#fd9741;
+}
+.vote-radio-text {
+	color: #DCDCDC;
+}
+.vote-span {
+	font-size: 32px;
+	display: inline-block;
+	height:100%;
+	width:100px;
+}
+.vote-span-end {
+	width:initial;
+}
+
+@-webkit-keyframes scalezor {
+	0% {
+        -webkit-transform: scale(1);
+    }
+	25% {
+		-webkit-transform: scale(1.25);
+	}
+	75% {
+		-webkit-transform: scale(.75);
+	}			
+	100% {
+		-webkit-transform: scale(1);
+	}
+}
