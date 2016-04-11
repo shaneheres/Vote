@@ -45,7 +45,7 @@ To add (or remove) more attributes, modify $wgVoteAttributes in LocalSettings.ph
 // 'id' must be a unique integer, and should never be changed.
 $wgVoteAttributes['Readability'] = array('id'=>10, 'style'=>'Nero');
 $wgVoteAttributes['Random Attribute'] = array('id'=>11, 'style'=>'Nero');
-$wgVoteAttributes['Favorite 2'] = array('id'=>11, 'style'=>'Favorite');
+$wgVoteAttributes['Favorite 2'] = array('id'=>100, 'style'=>'Favorite');
 ```
 
 ## How to add more styles
