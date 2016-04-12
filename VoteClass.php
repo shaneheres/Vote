@@ -84,10 +84,12 @@ class Vote
 	{
 		global $wgVoteStyles;
 		$data = $wgVoteStyles[$this->Style];
+		$max = count($data);
 		
 		// Check that the requested vote is within allowable range. Safety precaution.
-		if($vote >= 0 && $vote < count($data))
+		if($vote >= 0 && $vote < $max)
 		{
+			$time_pre = microtime(true);
 			$pageName = Title::newFromID($this->IDPage);
 			$alreadyVoted = $this->getUsersVote();
 			
@@ -118,18 +120,25 @@ class Vote
 					'COUNT(id_vote) AS vote_count, AVG(id_vote) AS vote_average',
 					array('id_page' => $this->IDPage, 'id_attribute' => $this->IDAttribute));
 				
-				if ($row->vote_average == null) {
-					$row->vote_average = 0;
-					$row->vote_count = 0;
+				if ($row->vote_count == null || $row->vote_count == 0) {
+					$score = "";
+					$count = "";
+				} else {
+					if ($max > 1) {
+						$score = $max - 1 - $row->vote_average;
+						$score *= 100.0;
+						$score /= $max - 1;
+						$score = number_format($score, 2);
+					} else {
+						$score = 100;
+					}
+					$count = $row->vote_count;
 				}
-				
-				// Normalize the votes.
-				$score = $row->vote_count == 0 ? 0 : number_format(100.0-(floatval($row->vote_average)/(count($data)-1.0)) * 100.0, 2);
 				
 				// Append semantic data to bottom of page. This will be invisible to readers, but not editors.
 				$page = WikiPage::factory($pageName);
 				$text = $page->getText();
-				$subtext = "{{#set:{$this->Attribute}={$score}|{$this->Attribute} votes={$row->vote_count}}}";
+				$subtext = ($count == "" ? "" : "{{#set:{$this->Attribute}={$score}|{$this->Attribute} votes={$count}}}");
 				$tag = "Vote-" . $this->Attribute;
 				
 				if (strpos($text, "<!--Vote-") === false) {
@@ -147,6 +156,7 @@ class Vote
 				}
 			}
 			
+			return (microtime(true) - $time_pre);
 			return strval($flag);
 		}
 		else
