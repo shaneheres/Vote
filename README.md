@@ -61,7 +61,8 @@ ALTER TABLE `votero_scores`
 * Add to LocalSettings.php
 ```php
 require_once "$IP/extensions/Vote/Vote.php";
-// $wgVoteroSMW = false; /*uncomment to disable semantic option*/
+// Semantic MediaWiki tie in.
+$wgVoteroSMW = false;
 // Maximum pages to show in a query.
 $wgVoteroQueryLimit = 10;
 ```
