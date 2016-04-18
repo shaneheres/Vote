@@ -20,7 +20,7 @@ Original code based off the VoteNY extension.
 
 ## How to install.
 * You will need an icon font like [Font Awesome](http://fortawesome.github.io/Font-Awesome/) or [Glypicons](http://glyphicons.bootstrapcheatsheets.com/)
-* Add Vote folder to your mediawiki/extensions/ folder.
+* Add Votero folder to your mediawiki/extensions/ folder.
 * Add table 'votero' to mysql database:
 ```sql
 CREATE TABLE `votero` (
@@ -60,7 +60,7 @@ ALTER TABLE `votero_scores`
 ```
 * Add to LocalSettings.php
 ```php
-require_once "$IP/extensions/Vote/Vote.php";
+require_once "$IP/extensions/Votero/Votero.php";
 // Semantic MediaWiki tie in.
 $wgVoteroSMW = false;
 // Maximum pages to show in a query.
@@ -78,7 +78,7 @@ $wgVoteroQueryLimit = 10;
 
 ## How to add more attributes.
 The extension only has two pre made attributes that can be voted on: Favorite and Rating.<br>
-To add (or remove) more attributes, modify $wgVoteAttributes in LocalSettings.php
+To add (or remove) more attributes, modify $wgVoteroAttributes in LocalSettings.php
 ```php
 // 'id' must be a unique integer, and should never be changed.
 $wgVoteroAttributes['Readability'] = array('id'=>10, 'style'=>'Nero');
@@ -88,7 +88,7 @@ $wgVoteroAttributes['Favorite 2'] = array('id'=>100, 'style'=>'Favorite');
 
 ## How to add more styles.
 The extension has two pre made styles that can be used: Favorite (a single star icon) and Nero (a thumbs up & thumbs down icon).<br>
-To add (or remove) more styles, modify $wgVoteStyles in LocalSettings.php
+To add (or remove) more styles, modify $wgVoteroStyles in LocalSettings.php
 ```php
 $wgVoteroStyles['Faces']['display'] = "labels";
 $wgVoteroStyles['Faces']['buttons'] = array(
@@ -120,7 +120,7 @@ $wgVoteroStyles['Faces']['buttons'] = array(
 ## Semantic MediaWiki.
 When any user makes a vote, the data gets edited (hacked) into the bottom of the page, like so:
 ```php
-<!--Results from Vote extension for use by Semantic MediaWiki extension.-->
+<!--Results from Votero extension for use by Semantic MediaWiki extension.-->
 <!--Votero-Feeling-->{{#set:Feeling=75.00|Feeling votes=1}}<!--end-->
 <!--Votero-Favorite-->{{#set:Favorite=100.00|Favorite votes=1}}<!--end-->
 <!--Votero-Rating-->{{#set:Rating=100.00|Rating votes=1}}<!--end-->
