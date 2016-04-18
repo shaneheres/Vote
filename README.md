@@ -20,26 +20,42 @@ Image shows 3 different bars easily created with Vote extension.<br>
 ## How to install
 * You will need an icon font like [Font Awesome](http://fortawesome.github.io/Font-Awesome/) or [Glypicons](http://glyphicons.bootstrapcheatsheets.com/)
 * Add Vote folder to your mediawiki/extensions/ folder.
-* Add table to mysql database:
-```mysql
-CREATE TABLE /*_*/vote (
-  -- meh
-  `incremental` int(11) NOT NULL auto_increment PRIMARY KEY,
-  -- User ID
-  `id_user` int(11) NOT NULL default '0',
-  -- ID of the page
-  `id_page` int(11) NOT NULL default '0',
-  -- ID of the attribute
-  `id_attribute` int(11) NOT NULL default '0',
-  -- ID of the vote
-  `id_vote` int(11) NOT NULL default '0',
-  -- Timestamp when the vote was cast
-  `vote_date` datetime NOT NULL default CURRENT_TIMESTAMP,
-) /*$wgDBTableOptions*/;
+* Add table 'votero' to mysql database:
+```sql
+CREATE TABLE `votero` (
+  `id` int(11) NOT NULL,
+  `user` int(11) NOT NULL,
+  `page` int(11) NOT NULL,
+  `attribute` int(11) NOT NULL,
+  `vote` int(11) NOT NULL,
+  `date` datetime NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE INDEX vote_page_id_index ON /*_*/vote (id_page);
-CREATE INDEX valueidx ON /*_*/vote (id_attribute);
-CREATE INDEX vote_date ON /*_*/vote (vote_date);
+ALTER TABLE `votero`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `vote_page_id_index` (`page`),
+  ADD KEY `valueidx` (`attribute`),
+  ADD KEY `vote_date` (`date`);
+
+ALTER TABLE `votero`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+```
+* Add table 'votero_scores' to mysql database:
+```sql
+CREATE TABLE `votero_scores` (
+  `id` int(11) NOT NULL,
+  `page` int(11) NOT NULL,
+  `attribute` int(11) NOT NULL,
+  `average` decimal(7,4) NOT NULL,
+  `total_votes` int(11) NOT NULL,
+  `bayes` decimal(7,4) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+ALTER TABLE `votero_scores`
+  ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `votero_scores`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 ```
 * Add to LocalSettings.php
 ```php
