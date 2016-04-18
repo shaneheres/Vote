@@ -1,0 +1,11 @@
+VERSION 0.2
+*Renamed to Votero to prevent script conflicts.
+*Added #voteroquerry to list pages sorted on attribute by bayesian rating.
+*New ways to display ratings.
+**Numbers below. (More condensed overall.)
+**Numbers and text below. (No need for mouseover.)
+**Stars. (The traditional stars system. Selecting one highlights the ones before.)
+*Button colors changed to hex values instead of classes.
+*Can set a backing icon. (Shown when button is not selected.)
+*Stats load through js, so pages can be cached and show up to date results.
+*Styles can have their averages counted in 'reversed'.
