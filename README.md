@@ -6,9 +6,9 @@ Original code based off the VoteNY extension.
 * Renamed to Votero to prevent scripting conflicts.
 * Added #voteroquerry to list pages sorted on attribute by bayesian rating. (No need for SMW.)
 * New ways to display ratings.
-** 'underneath' Numbers below. (More condensed overall.)
-** 'labels' Numbers and text below. (No need for mouseover.)
-** 'stars'. The traditional stars system. (Selecting one highlights the buttons before.)
+  * 'underneath' Numbers below. (More condensed overall.)
+  * 'labels' Numbers and text below. (No need for mouseover.)
+  * 'stars'. The traditional stars system. (Selecting one highlights the buttons before.)
 * Button colors changed to hex values instead of classes.
 * Can set a backing icon. (Shown when button is not selected.)
 * Stats load through js, so pages can be cached and show up to date results.
