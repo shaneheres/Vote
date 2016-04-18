@@ -14,10 +14,11 @@ Original code based off the VoteNY extension.
 * Stats load through js, so pages can be cached and show up to date results.
 * Styles can have their averages stored in reverse. (25% -> 75%)
 
-Image shows 3 different bars easily created with Vote extension.<br>
+<br><br>
+## Some of the bars you can create.
 ![Alt text](/Untitled.png?raw=true "Optional Title")
 
-## How to install
+## How to install.
 * You will need an icon font like [Font Awesome](http://fortawesome.github.io/Font-Awesome/) or [Glypicons](http://glyphicons.bootstrapcheatsheets.com/)
 * Add Vote folder to your mediawiki/extensions/ folder.
 * Add table 'votero' to mysql database:
@@ -60,65 +61,68 @@ ALTER TABLE `votero_scores`
 * Add to LocalSettings.php
 ```php
 require_once "$IP/extensions/Vote/Vote.php";
-// $wgVoteSMW = false; /*uncomment to disable semantic option*/
+// $wgVoteroSMW = false; /*uncomment to disable semantic option*/
+// Maximum pages to show in a query.
+$wgVoteroQueryLimit = 10;
 ```
 
 ## How to use in wiki
 ```wiki
-{{#vote:Favorite}}{{#vote:Rating}}
+<!-- To create an input field -->
+{{#votero:Favorite}}{{#votero:Rating}}
+
+<!-- To create a query list -->
+{{#voteroquery:Rating}}
 ```
 
-## How to add more attributes
+## How to add more attributes.
 The extension only has two pre made attributes that can be voted on: Favorite and Rating.<br>
 To add (or remove) more attributes, modify $wgVoteAttributes in LocalSettings.php
 ```php
 // 'id' must be a unique integer, and should never be changed.
-$wgVoteAttributes['Readability'] = array('id'=>10, 'style'=>'Nero');
-$wgVoteAttributes['Random Attribute'] = array('id'=>11, 'style'=>'Nero');
-$wgVoteAttributes['Favorite 2'] = array('id'=>100, 'style'=>'Favorite');
+$wgVoteroAttributes['Readability'] = array('id'=>10, 'style'=>'Nero');
+$wgVoteroAttributes['Random Attribute'] = array('id'=>11, 'style'=>'Nero');
+$wgVoteroAttributes['Favorite 2'] = array('id'=>100, 'style'=>'Favorite');
 ```
 
-## How to add more styles
+## How to add more styles.
 The extension has two pre made styles that can be used: Favorite (a single star icon) and Nero (a thumbs up & thumbs down icon).<br>
 To add (or remove) more styles, modify $wgVoteStyles in LocalSettings.php
 ```php
-$wgVoteStyles['Faces'] = array( // Use a unique name for the style.
-// Each button must have a 'title', 'class', and 'color' option.
+$wgVoteroStyles['Faces']['display'] = "labels";
+$wgVoteroStyles['Faces']['buttons'] = array(
 	array(
-		// Text that shows up on button hover.
 		'title'=>'Great',
-		// Icon class used for button image. Use with Font Awesome, Glyphicon, or whatever...
-		// (http://fortawesome.github.io/Font-Awesome/icon/star/)
 		'class'=>'emo emo-heartdowneyes',
-		// A class added to selected option. (Usually just to change buttons color.)
-		// Pre built classes: vote-red, vote-green, vote-blue, vote-yellow.
-		// Use "" to keep it black.
-		'color'=>'vote-green')
+		/* Optional class to show when unselected. Good for Star bars.
+		'classBack'=>'fa fa-star-o',
+		*/
+		'color'=>'#75caeb'),
 	array(
 		'title'=>'Good',
 		'class'=>'emo emo-blush',
-		'color'=>'vote-blue'),
+		'color'=>'#75caeb'),
 	array(
 		'title'=>'Nothing',
 		'class'=>'emo emo-neutraldownface',
-		'color'=>'vote-blue'),
+		'color'=>'#75caeb'),
 	array(
 		'title'=>'Bad',
 		'class'=>'emo emo-confused',
-		'color'=>'vote-blue'),
+		'color'=>'#75caeb'),
 	array(
 		'title'=>'Awful',
 		'class'=>'emo emo-angry',
-		'color'=>'vote-red')
+		'color'=>'#75caeb')
 );
 ```
-## Semantic MediaWiki
+## Semantic MediaWiki.
 When any user makes a vote, the data gets edited (hacked) into the bottom of the page, like so:
 ```php
 <!--Results from Vote extension for use by Semantic MediaWiki extension.-->
-<!--Vote-Feeling-->{{#set:Feeling=75.00|Feeling votes=1}}<!--end-->
-<!--Vote-Favorite-->{{#set:Favorite=100.00|Favorite votes=1}}<!--end-->
-<!--Vote-Rating-->{{#set:Rating=100.00|Rating votes=1}}<!--end-->
+<!--Votero-Feeling-->{{#set:Feeling=75.00|Feeling votes=1}}<!--end-->
+<!--Votero-Favorite-->{{#set:Favorite=100.00|Favorite votes=1}}<!--end-->
+<!--Votero-Rating-->{{#set:Rating=100.00|Rating votes=1}}<!--end-->
 ```
 It's invisible to readers, but page editor could modify it, though it would be reset whenever someone else voted.<br>
 Currently you can only querry the data with SMW. They have lot's of useful [query formats](https://www.semantic-mediawiki.org/wiki/Help:Result_formats) including a [Custom template](https://www.semantic-mediawiki.org/wiki/Help:Template_format) format.<br>
