@@ -1,46 +1,47 @@
+window.onload = function() {
 var Votero = function Votero() {
-	var ready = false;
-	
-	// Get initial values.
-	this.init = function(a) {$.post(mw.util.wikiScript(), {action:'ajax', rs:'wfVoteroGetData', rsargs: [mw.config['values']['wgArticleId'], a.join()]}).done(function(d) {
-		var d_attrib = d.split("|");
-		
-		for (var i = 0; i < d_attrib.length; i++) {
-			var attribute = a[i];
-			var split = d_attrib[i].split(".");
-			var myvote = split[0];
-			var counts = split[1].split("_");
-			var isStars = $("#votero_" + attribute + "_0_span").hasClass("votero-stars");
-			
-			for(var vote = 0; vote < counts.length; vote++) {
-				var count = counts[vote];
-				
-				// Update text.
-				if (!isStars) {
-					$("#votero_" + attribute + "_" + vote + "_txt")
-						.data('voteCount', count)
-						.text(format_number(count));
-				}
-				
-				// Select parent if this is what user voted for.
-				if (myvote == vote || (isStars && vote < myvote))
-				{
-					$("#votero_" + attribute + "_" + vote + "_span").addClass('votero-selected');
-					
-					var button = $("#votero_" + attribute + "_" + vote + "_btn");
-					button.removeClass(button.data('backing')).addClass(button.data('class'));
-				}
-			}
-		}
-		Votero.ready = true;
-		console.log("Ready");
-	});};
-	
 	// Submit a vote.
 	this.vote = function(a, v) {$.post(mw.util.wikiScript(), {action:'ajax', rs:'wfVoteroClick', rsargs:[mw.config['values']['wgArticleId'], a, v]}).done(function(d) {
-		//console.log(d);
+		console.log(d);
 	});};
 };
+
+window.voteroRangeSubmit = function(id, v) {
+	// Submit a vote.
+	var a = id.split('_')[1];
+	$.post(mw.util.wikiScript(), {action:'ajax', rs:'wfVoteroClick', rsargs:[mw.config['values']['wgArticleId'], a, v]}).done(function(d) {
+		console.log(d);
+	});
+}
+
+window.voteroRangeStep = function(id, value) {
+	var parts = id.split('_');
+	var textID = "#" + parts[0] + "_" + parts[1] + "_" + parts[2] + "_txt";
+	var attribute = parts[1];
+	var label = $("#" + parts[0] + "_" + parts[1] + "_" + parts[2]).data("label");
+	label = label.replace('VV', number_with_commas(value)); // value with commas.
+	label = label.replace('MCG', convert_microgram(value)); // value converted to micrograms.
+	label = label.replace('MG', convert_miligram(value)); // value converted to miligram.
+	label = label.replace('SS', (value > 1 || value <-1) ? "'s" : ''); // apostrophe s
+	$(textID).text(label);
+}
+
+function number_with_commas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function convert_miligram(x) {
+	if (x > 1000000) return (x / 1000000).toFixed(2) + " kg";
+	if (x > 1000) return (x / 1000).toFixed(2) + " g";
+	return x + " mg";
+}
+
+function convert_microgram(x) {
+	if (x > 1000000000) return (x / 1000000000).toFixed(2) + " kg";
+	if (x > 1000000) return (x / 1000000).toFixed(2) + " g";
+	if (x > 1000) return (x / 1000).toFixed(2) + " mg";
+	return x + " mcg";
+}
 
 function format_number(number) {
 	if (number >= 9940) return Math.round(number / 1000) + "k";
@@ -48,71 +49,84 @@ function format_number(number) {
 	return number;
 }
 
+// Activate tooltips.
+$('[data-toggle="tooltip"]').tooltip();
+
 $(function() {
 	var votero = new Votero();
 	var canVote = true;
 	
-	var list = [];
-	$('.votero-button').each(function() { if ($(this).data('vote') == 0) list.push($(this).data('attribute')); });
-	votero.init(list);
-	
-	$('body').on('click', '.votero-button', function() {
-		if (canVote && Votero.ready) {
+	$('body').on('click', '.votero', function() {
+		if (canVote) {
 			canVote = false;
-			setTimeout(function(){ canVote = true; }, 1500);
+			setTimeout(function(){ canVote = true; }, 1000);
 			
 			var that = $(this);
-			var attribute = that.data('attribute');
-			var vote = that.data('vote');
+			
+			var attribute = that.parent().parent().attr('id').split('_')[1];
+			var style = that.parent().parent().attr('id').split('_')[2];
+			var isStars = (style == 'stars'); // Star display is unique in that it highlights all previous buttons.
+			var vote = that.attr('id');
+			
+			// Place vote.
 			votero.vote(attribute, vote);
 			
 			var list = [];
 			var lastVote = -1;
 			
-			// Get related buttons.
-			$('.votero-button').each(function() {
+			$('.votero').each(function() {
 				var button = $(this);
-				if (button.data('attribute') == attribute)
+				var buttonAttribute = button.parent().parent().attr('id').split('_')[1];
+				
+				if (buttonAttribute == attribute)
 				{
-					list.push($(this));
+					var buttonSelected = button.hasClass('votero-selected');
+					var buttonVote = button.attr('id');
 					
-					// Get last vote. (Whichever is selected. If it's a stars display, multiple buttons will be selected so grab the last most one.)
-					if (button.parent().hasClass("votero-selected")) {
-						
-						button.parent().removeClass("votero-selected");
-						button.removeClass(button.data('class')).addClass(button.data('backing'));
-						
-						if (!isStars) {
-							var buttonText = $("#votero_" + button.data('attribute') + "_" + button.data('vote') + "_txt");
-							var count = parseInt(buttonText.data('voteCount')) - 1;
-							buttonText.data('voteCount', count).text(format_number(count));
-						}
-						
-						if (button.data('vote') > lastVote)
-							lastVote = button.data('vote');
-					} 
+					if (buttonSelected && buttonVote > lastVote)
+						lastVote = buttonVote;
 				}
 			});
 			
-			var deselecting = (vote == lastVote); // Removing vote.
-			var isStars = that.parent().hasClass("votero-stars"); // Star display is unique in that it selects all previous buttons.
+			var deselecting = (vote == lastVote);
 			
-			for (var i = 0; i < list.length; i++) {
-				var button = list[i];
+			$('.votero').each(function() {
+				var button = $(this);
+				var buttonAttribute = button.parent().parent().attr('id').split('_')[1];
 				
-				if (!deselecting && (vote == i || (isStars && i < vote))) {
-					// Select button and animate.
-					button.addClass("votero-anim-selected").removeClass(button.data('backing')).addClass(button.data('class')).parent().addClass("votero-selected");
-					// Remove animation class, so it can be animated again if clicked again.
-					setTimeout(function(attribute, i){ $("#votero_"+attribute+"_"+i+"_btn").removeClass("votero-anim-selected"); }, 200, attribute, i);
+				if (buttonAttribute == attribute)
+				{
+					list.push($(this));
+					var buttonSelected = button.hasClass('votero-selected');
+					var buttonVote = button.attr('id');
 					
-					if (!isStars) {
-						var buttonText = $("#votero_" + attribute + "_" + vote + "_txt");
-						var count = parseInt(buttonText.data('voteCount')) + 1;
-						buttonText.data('voteCount', count).text(format_number(count));
+					// Deselect.
+					if (deselecting || (isStars && buttonVote > vote)) {
+						// Swap icon.
+						button.removeClass(button.data('class')).addClass(button.data('backing')).removeClass('votero-selected');
+						
+						// Subtract from count.
+						if (!isStars) {
+							var count = parseInt(button.data('count')) - 1;
+							button.data('count', count).text(' ' + format_number(count));
+						}
+						
+					}
+					
+					// Selecting.
+					if (!deselecting && (vote == buttonVote || (isStars && vote > buttonVote))) {
+						// Swap icon.
+						button.removeClass(button.data('backing')).addClass(button.data('class')).addClass("votero-selected");
+						
+						// Add to count.
+						if (!isStars) {
+							var count = parseInt(button.data('count')) + 1;
+							button.data('count', count).text(' ' + format_number(count));
+						}
 					}
 				}
-			}
+			});
 		}
 	});
 } );
+}

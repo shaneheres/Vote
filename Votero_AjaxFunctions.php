@@ -1,5 +1,5 @@
 <?php
-
+// Called by javascript.
 // Places a vote, if the user is allowed and the attribute exists.
 $wgAjaxExportList[] = 'wfVoteroClick';
 function wfVoteroClick($page, $attribute, $vote) {
@@ -22,23 +22,30 @@ function wfVoteroClick($page, $attribute, $vote) {
 	return json_encode($votero->placeVote($vote));
 }
 
-// Get's the votes for a pages attributes bars.
-// This way page can be cached and still show up to date voting data.
-$wgAjaxExportList[] = 'wfVoteroGetData';
-function wfVoteroGetData($page, $attributes) {
+// Called in Special:Votero
+$wgAjaxExportList[] = 'wfVoteroSpecialUpdateA';
+function wfVoteroSpecialUpdateA($attributeName) {
 	global $wgUser, $wgVoteroAttributes;
 	
-	$a = explode (",", $attributes);
+	if (!in_array($attributeName, array_keys($wgVoteroAttributes)))
+		return "{$attributeName} isn't an allowable attribute.";
 	
-	// Check that all attribute are allowed.
-	// Don't bother continuing if someone tried to hack it.
-	$keys = array_keys($wgVoteroAttributes);
-	foreach ($a as $b) {
-		if (!in_array($b, $keys)) {
-			return $b . " is not an allowable attribute.";
-		}
-	}
+	if (!$wgUser->isAllowed('voteroadmin'))
+		return "You don't have permission for that.";
 	
-	$votero = new Votero($page, "");
-	return /*json_encode(*/$votero->getInitial($a);//);
+	return Votero::UpdateAttribute($attributeName);
+}
+
+// Called in Special:Votero
+$wgAjaxExportList[] = 'wfVoteroSpecialUpdateP';
+function wfVoteroSpecialUpdateP($pageID) {
+	global $wgUser;
+	
+	if (!is_numeric($pageID))
+		return "{$pageID} isn't an allowable page.";
+	
+	if (!$wgUser->isAllowed('voteroadmin'))
+		return "You don't have permission for that.";
+	
+	return Votero::UpdatePageSemanticData($pageID);
 }

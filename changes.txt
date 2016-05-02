@@ -1,6 +1,18 @@
+VERSION 0.3
+*Special page Special:Votero added for manually updating scores.
+*#voteroquery can take comma seperated arguments
+**template (custom templates. arguments will be: 1=Page name, 2=Weighted average, 3=Total votes)
+**limit (optional page limit. won't be able to go higher than $wgVoteroQueryLimit)
+**sorton (optional trait to sort on. can use 'votes', 'average', 'weighted' (default.))
+**decimals (format the average with X decimal places. 0-4)
+**special (values (recent, similar, disimilar) shows similar pages (bassed on an attribute and other peoples rating))
+*Added $wgVoteroVotesTillUpdate which can be set to prevent calculating page averages till after a set number of votes have been added.
+*range display option
+
+
 VERSION 0.2
 *Renamed to Votero to prevent script conflicts.
-*Added #voteroquerry to list pages sorted on attribute by bayesian rating.
+*Added #voteroquery to list pages sorted on attribute by bayesian rating.
 *New ways to display ratings.
 **Numbers below. (More condensed overall.)
 **Numbers and text below. (No need for mouseover.)
