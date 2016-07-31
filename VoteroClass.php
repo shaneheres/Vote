@@ -7,13 +7,28 @@ class Votero
 	public $AttributeName = "";
 	public $Style = "";
 	
-	public static function KeyAttributeExists($attribute) {
+	// Check if an attribute can be voted on.
+	public static function AttributeExists($attribute) {
 		global $wgVoteroAttributes;
 		
 		if (!in_array($attribute, array_keys($wgVoteroAttributes)))
 			return "Votero is not set up for attribute '{$attribute}'";
 		
 		return "true";
+	}
+	
+	// Get an attributes name from id.
+	public static function GetAttributeName($attributeID) {
+		global $wgVoteroAttributes;
+		
+		$keys = array_keys($wgVoteroAttributes);
+		foreach ($keys as $key) {
+			if ((int)$wgVoteroAttributes[$key]['id'] == $attributeID) {
+				return $key;
+			}
+		}
+		
+		return "false";
 	}
 	
 	public function __construct($page, $attribute) {
@@ -51,21 +66,25 @@ class Votero
 			return "Vote has to be numeric.";
 		}
 		
-		if ($vote < 0 || $vote >= $max) {
-			return "Vote must be between 0 and {$max}. (Was {$vote}.)";
-		}
+		$removeVote = $vote == -1;
 		
-		$alreadyVoted = (int)$this->getMyVote($this->AttributeID);
+		if (!removeVote) {
+			if ($vote < 0 || $vote >= $max) {
+				return "Vote must be between -1 and {$max}. (Was {$vote}.)";
+			}
+			
+			$alreadyVoted = $vote == -1 ? -1 : (int)$this->getMyVote($this->AttributeID);
+		}
 		
 		$dbw = wfGetDB(DB_MASTER);
 		
 		// Delete old vote.
-		if ($alreadyVoted != -1) {
+		if ($alreadyVoted != -1 || $removeVote) {
 			$this->query($dbw, "DELETE FROM votero WHERE user={$this->UserID} AND page={$this->PageID} AND attribute={$this->AttributeID}");
 		}
 		//return $alreadyVoted." ".($alreadyVoted != -1 ? "true" : "false")."DELETE FROM votero WHERE user={$this->UserID} AND page={$this->PageID} AND attribute={$this->AttributeID}";
 		// Create new vote.
-		if ($alreadyVoted != $vote) {
+		if ($alreadyVoted != $vote && !$removeVote) {
 			$time = time();
 			$this->query($dbw, "INSERT INTO votero (user, page, attribute, vote, date) VALUES({$this->UserID}, {$this->PageID}, {$this->AttributeID}, {$vote}, FROM_UNIXTIME({$time}))");
 		}
@@ -176,6 +195,7 @@ class Votero
 		return "";
 	}
 	
+	// TODO: REWRITE ALL THIS
 	function displayQuery($parser, $options) {
 		global $wgVoteroQueryLimit;
 		
@@ -191,6 +211,35 @@ class Votero
 				// 
 				default: return "";
 			}
+		}
+		
+		$dbr = wfGetDB(DB_SLAVE);
+		$row = $dbr->fetchObject($dbr->query("SELECT average, weighted_average, total_votes FROM votero_scores WHERE attribute={$this->AttributeID} AND page={$this->PageID}"));
+		if ($row != null) {
+			return "<span title='{$row->total_votes} votes'}>" . number_format($row->weighted_average) . "</span>";
+		} else {
+			return "<span title='0 votes'}>0</span>";
+		}
+		// Render as stars.
+		if (array_key_exists('stars', $options)) {
+			$dbr = wfGetDB(DB_SLAVE);
+			$row = $dbr->fetchObject($dbr->query("SELECT average, weighted_average, total_votes FROM votero_scores WHERE attribute={$this->AttributeID} AND page={$this->PageID}"));
+			
+			$size = array_key_exists('size', $options) ? $options['size'] : '1em';
+			
+			$output = "";
+			if ($row->average != null) {
+				for ($i = 0; $i < 5; $i += 1) {
+					$x = ($i / 5.0) * 100.0;
+					if ($x > $row->average) {
+						$output .= "<i class='fa fa-star-o'></i>";
+					} else {
+						$output .= "<i class='fa fa-star'></i>";
+					}
+				}
+			}
+			
+			return "<span title='{$row->votes} votes' style='font-size:{$size};'>" . $output . "</span>";
 		}
 		
 		// Template to represent data. (optional)
@@ -255,7 +304,7 @@ class Votero
 		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	}*/
 
-	function convert_microgram($x) {
+	/*function convert_microgram($x) {
 		if ($x > 1000000000) return number_format($x / 1000000000, 2) . " kg";
 		if ($x > 1000000) return number_format($x / 1000000, 2) . " g";
 		if ($x > 1000) return number_format($x / 1000, 2) . " mg";
@@ -267,14 +316,54 @@ class Votero
 		if ($x > 1000) return number_format($x / 1000, 2) . " g";
 		return x . " mg";
 	}
-	
+	*/
 	// Returns $key if it exists in $array, returns $default otherwise.
 	function getExists($array, $key, $default) {
 		return array_key_exists($key, $array) ? $array[$key] : $default;
 	}
 	
+	function formatSlider($sliderLabel, $x, $max) {
+		$vars = explode(',', Votero::get_between($sliderLabel, '[', ']'));
+		$original = $x;
+		
+		if (count($vars) == 1) {
+			$parts = explode('=', $vars[0]);
+			$label = count($parts) == 2 ? $parts[1] : $parts[0];
+			return Votero::replace_between($sliderLabel, '[', ']', "{$x}{$label}", true);
+		}
+		
+		for ($i = count($vars)-1; $i >= 0; $i -= 1) {
+			$parts = explode('=', $vars[$i]);
+			$v = (int)$parts[0];
+			$label = $parts[1];
+			
+			// If smaller than that, use current.
+			if ($x >= $v || $i == 0) {
+				$x = (float)$x / (float)$v;
+				
+				if ($i != 0) {
+					if (round($x) == number_format($x, 1)) {
+						$x = round($x);
+					} else {
+						$x = number_format($x, 1);
+					}
+				}
+				
+				if ($x != 1) {
+					$label .= "'s";
+				}
+				
+				if ($original == $max) {
+					$x = "Over {$x}";
+				}
+				
+				return Votero::replace_between($sliderLabel, '[', ']', "{$x}{$label}", true);
+			}
+		}
+	}
+	
 	function display($parser) {
-		global $wgUser, $wgVoteroStyles;
+		global $wgUser, $wgVoteroStyles, $wgVoteroAttributes;
 		
 		$parser->getOutput()->addModuleStyles('ext.votero.styles');
 		$parser->getOutput()->addModules('ext.votero.scripts');
@@ -283,11 +372,12 @@ class Votero
 		$display = $this->getExists($styleData, 'display', '');
 		$labelDisplay = $this->getExists($styleData, 'label display', 'off');
 		$countDisplay = $this->getExists($styleData, 'count display', 'right');
-		$size = $this->getExists($styleData, 'size', '1em');
+		// Get size from attribute, otherwise use style default.
+		$size = $this->getExists($wgVoteroAttributes[$this->AttributeName], 'size', $this->getExists($styleData, 'size', '1em'));
 		$width = $this->getExists($styleData, 'width', 'auto');
 		$spanColor = $this->getExists($styleData, 'color', '#000000');
 		
-		$id = "votero_{$this->AttributeName}_{$display}";
+		$id = "votero_{$this->PageID}_{$this->AttributeID}_{$display}";
 		$output = "<span id='{$id}' style='font-size:{$size};'>";
 		
 		// Get my vote.
@@ -297,32 +387,36 @@ class Votero
 		// Range display. (No buttons.)
 		switch($display) {
 			case 'range':
-				$min = $this->getExists($styleData, 'min', 0);
 				$max = $this->getExists($styleData, 'max', 100);
 				$default = $myVote != -1 ? $myVote : $this->getExists($styleData, 'default', (int)$max / 2);
 				$step = $this->getExists($styleData, 'step', 'any');
 				$label = $this->getExists($styleData, 'label', '');
+				$labelFormatted = $myVote == -1 ? "" : $this->formatSlider($label, (int)$default, $max);
 				
+				$label1 = $this->formatSlider($label, 0, $max);
+				$label2 = $this->formatSlider($label, $max, $max);
+				$output = "<span>{$label1}</span><span class='pull-right'>{$label2}</span>";
 				// Range.
-				$output = "<input id='{$id}' style='width:{$width};display:inline;' type='range' min='{$min}' max='{$max}' value='{$default}' step='{$step}' data-label='{$label}' oninput='voteroRangeStep(id,value)' onchange='voteroRangeSubmit(id,value)'></input>";
-				// Label.
-				$label = str_replace('VV', number_format($default), $label);
-				$label = str_replace('MCG', $this->convert_microgram($default), $label);
-				$label = str_replace('MG', $this->convert_miligram($default), $label);
-				$label = str_replace('SS', ($default > 1 || $default < -1) ? "'s" : "", $label);
+				$output .= "<input id='{$id}' style='width:{$width};display:inline;' type='range' min='0' max='{$max}' value='{$default}' step='{$step}' data-label=\"". $label ."\" oninput='voteroRangeStep(id,value)' onchange='voteroRangeSubmit(id,value)'>";
+				// Delete input button.
+				$deleteCSS = $myVote == -1 ? "style='display:none'" : "";
+				$output .= "<span {$deleteCSS} id='{$id}_delete' data-toggle='tooltip' data-placement='top' title='Remove input.' class='fa fa-trash votero-delete'></span>";
+				// Input label.
+				$output .= "<span style='color:{$spanColor};' id='{$id}_txt'> {$labelFormatted}</span>";
 				
-				$output .= "<span id='{$id}_txt'>{$label}</span>";
 				return $output;
 				break;
 		}
 		
 		$buttons = $styleData['buttons'];
 		$count = count($buttons);
+		$superClass = $this->getExists($styleData, 'class', '');
+		$superClassBack = $this->getExists($styleData, 'classBack', '');
 		
 		for($x = 0; $x < $count; $x += 1)
 		{
-			$class = $this->getExists($buttons[$x], 'class', 'fa-star');
-			$classBack = $this->getExists($buttons[$x], 'classBack', $class);
+			$class = $this->getExists($buttons[$x], 'class', $superClass);
+			$classBack = $this->getExists($buttons[$x], 'classBack', $superClassBack == '' ? $class : $superClassBack);
 			$color = $this->getExists($buttons[$x], 'color', $spanColor);
 			
 			// If this button was my vote, highlight it. (If display type is 'stars' buttons to the left will also be highlighted.)
@@ -344,14 +438,14 @@ class Votero
 			$output .= "data-backing='{$classBack}'";
 			
 			// Vote label.
-			if ($labelDisplay != 'off') {
+			if ($labelDisplay == 'on') {
 				$output .= "data-toggle='tooltip'";
 				$output .= "data-placement='top'";
 				$output .= "title='{$label}'";
 			}
 			
 			// Vote count.
-			if ($countDisplay != 'off'){
+			if ($countDisplay == 'on'){
 				$voteCount = $dbr->fetchObject($dbr->query("SELECT COUNT(*) AS vote_count FROM votero WHERE page={$this->PageID} AND attribute={$this->AttributeID} AND vote={$x}"))->vote_count;
 				$output .= "data-count='{$voteCount}'";
 			}
@@ -359,27 +453,21 @@ class Votero
 			$output .= ">";
 			
 			// Text representation of vote count.
-			if ($countDisplay != 'off') {
-				$output .= " {$this->formatNumber($voteCount)}";
+			if ($countDisplay == 'on') {
+				$fontSize = $this->getExists($styleData, 'font-size', $size);
+				$output .= " <span style='font-size:{$fontSize};'>{$this->formatNumber($voteCount)}</span>";
+			}
+			$output .= "</span>";
+			
+			if ($display == 'radio') {
+				$fontSize = $this->getExists($styleData, 'font-size', $size);
+				$output .= " <span style='font-size:{$fontSize};color:black;'>{$label}</span><br>";
 			}
 			
-			$output .= "</span></span>";
+			$output .= "</span>";
 		}
 		
 		return $output . "</span>";
-	}
-	
-	public static function GetAttributeName($attributeID) {
-		global $wgVoteroAttributes;
-		$keys = array_keys($wgVoteroAttributes);
-		
-		foreach ($keys as $key) {
-			if ((int)$wgVoteroAttributes[$key]['id'] == $attributeID) {
-				return $key;
-			}
-		}
-		
-		return false;
 	}
 	
 	public static function UpdatePageSemanticData($pageID) {
@@ -435,11 +523,11 @@ class Votero
 							case 'int': $form = ' votes'; break;
 							case 'format': $form = ' votes'; $value = number_format($value); break;
 							// Average.
-							case 'percent': $form = ' rating'; $value = number_format($value); break;
-							case 'percent1': $form = ' rating'; $value = number_format($value, 1); break;
-							case 'percent2': $form = ' rating'; $value = number_format($value, 2); break;
+							case 'percent': $form = ' average'; $value = number_format($value); break;
+							case 'percent1': $form = ' average'; $value = number_format($value, 1); break;
+							case 'percent2': $form = ' average'; $value = number_format($value, 2); break;
 							// Normal.
-							case 'normal': $form = ' rating'; $value = number_format($value / 100.0, 2); break;
+							case 'normal': $form = ' normal'; $value = number_format($value / 100.0, 2); break;
 							// Index.
 							case 'index': $form = ' index'; $value = round(($value / 100.0) * $max); break;
 							case 'index_f': $form = ' index'; $value = floor(($value / 100.0) * $max); break;
@@ -558,11 +646,20 @@ class Votero
 		return $output . "{$pagesUpdated} pages updated in {$total_time}.<br>";
 	}
 	
-	public static function replace_between($str, $needle_start, $needle_end, $replacement) {
+	public static function get_between($string, $start, $end) {
+		$string = ' ' . $string;
+		$ini = strpos($string, $start);
+		if ($ini == 0) return '';
+		$ini += strlen($start);
+		$len = strpos($string, $end, $ini) - $ini;
+		return substr($string, $ini, $len);
+	}
+	
+	public static function replace_between($str, $needle_start, $needle_end, $replacement, $remove_needles=false) {
 		$pos = strpos($str, $needle_start);
 		$start = $pos === false ? 0 : $pos + strlen($needle_start);
 		$pos = strpos($str, $needle_end, $start);
 		$end = $start === false ? strlen($str) : $pos;
-		return substr_replace($str,$replacement,  $start, $end - $start);
+		return substr_replace($str, $replacement, $start - ($remove_needles ? strlen($needle_start) : 0), $end - $start + ($remove_needles ? strlen($needle_start . $needle_end) : 0));
 	}
 }

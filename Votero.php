@@ -23,7 +23,7 @@ $wgVoteroUpdatePage = 1;
 
 $wgVoteroAttributes = array(
 // Rating modes.
-	'Slider' => array('id' => 1000, 'style' => 'Slider', 'smw' => 'average AS percent, weighted AS normal, weighted AS class, average AS label_f, average AS label_c, votes AS format'),
+	//'Slider' => array('id' => 1000, 'style' => 'Slider', 'smw' => 'average AS percent, weighted AS normal, weighted AS class, average AS label_f, average AS label_c, votes AS format'),
 	'Favorite' => array('id' => 0, 'style' => 'Favorite'),
 	'Nero' => array('id' => 1, 'style' => 'Nero'),
 	'Stars' => array('id' => 2, 'style' => 'Stars')
@@ -65,10 +65,7 @@ $wgVoteroStyles['Slider']['max'] = 10000;
 $wgVoteroStyles['Slider']['step'] = 10;
 $wgVoteroStyles['Slider']['width'] = '500px';
 $wgVoteroStyles['Slider']['label'] = "Aprox MGSS.";
-// SS = becomes 's if greater than one.
-// VV = value with commas ie 1,000,000
-// MCG = value in micrograms (mcg=0, mg=1000, g=1000000, kg=1000000000)
-// MG = value in milligrams (mg=0, g=1000, kg=1000000)
+
 $wgVoteroStyles['Slider']['buttons'] = array(
 	array('label'=>'Awful', 'class'=>'emo emo-angry'),
 	array('label'=>'Bad', 'class'=>'emo emo-confused'),
@@ -117,6 +114,9 @@ $wgGroupPermissions['sysop']['voteroadmin'] = true; // Admins can.
 require_once 'Votero_AjaxFunctions.php';
 $wgExtensionMessagesFiles['Votero'] = __DIR__ . '/Votero.i18n.php';
 $wgAutoloadClasses['Votero'] = __DIR__ . '/VoteroClass.php';
+$wgAutoloadClasses['VQ_default'] = __DIR__ . '/query formats/VQ_default.php';
+$wgAutoloadClasses['VQ_stars'] = __DIR__ . '/query formats/VQ_stars.php';
+
 $wgSpecialPages['Votero'] = 'SpecialPageVotero';
 $wgAutoloadClasses['SpecialPageVotero'] = __DIR__ . '/SpecialPageVotero.php'; # Location of the SpecialMyExtension class (Tell MediaWiki to load this file)
 $wgExtensionMessagesFiles['SpecialPageVotero'] = __DIR__ . '/SpecialPageVotero.alias.php';
@@ -129,34 +129,50 @@ function voteroOnParserSetup( &$parser ) {
 	return true;
 }
 
-function getInputHTML($parser, $attribute = '') {
+function getInputHTML($parser, $attribute = '', $page = '') {
 	global $wgOut;
 	
 	// Check that attribute exists.
-	$error = Votero::KeyAttributeExists($attribute);
+	$error = Votero::AttributeExists($attribute);
 	if ($error != "true")
 		return $error;
 	
-	$votero = new Votero($wgOut->getTitle()->getArticleID(), $attribute);
+	// If a page wasn't given, use whichever page we are contained in.
+	$page = ($page == '' ? $wgOut->getTitle() : Title::newFromText($page));
+	$pageID = $page->getArticleID();
+	
+	$votero = new Votero($pageID, $attribute);
 	return array($votero->display($parser), 'noparse' => true, 'isHTML' => true);
 }
 
-function getQueryHTML($parser, $attribute = '', $options = '') {
-	global $wgOut;
+function getQueryHTML($parser, $attribute = '') {
+	global $wgOut, $wgAutoloadClasses;
 	
 	// Check that attribute exists.
-	$error = Votero::KeyAttributeExists($attribute);
+	$error = Votero::AttributeExists($attribute);
 	if ($error != "true")
 		return $error;
 	
-	$votero = new Votero($wgOut->getTitle()->getArticleID(), $attribute);
-	return array($votero->displayQuery($parser, extractOptions($options)), 'noparse' => true, 'isHTML' => true);
+	$pageID = $wgOut->getTitle()->getArticleID();
+	$options = extractOptions(array_slice(func_get_args(), 1));
+	
+	// Check if format exists.
+	if (array_key_exists('format', $options) && array_key_exists('VQ_' . $options['format'], $wgAutoloadClasses)) {
+		// Use special format. (This allows for extensions.)
+		$class = 'VQ_' . $options['format'];
+		$voteroQuery = new $class($pageID, $attribute);
+	} else {
+		// Otherwise use default.
+		$voteroQuery = new VQ_default($pageID, $attribute);
+	}
+	
+	// Return html.
+	return array($voteroQuery->display($parser, $options), 'noparse' => true, 'isHTML' => true);
 }
 
-function extractOptions( $options ) {
-	$options = explode(',', $options);
+function extractOptions( array $options ) {
 	$results = array();
-	
+
 	foreach ( $options as $option ) {
 		$pair = explode( '=', $option, 2 );
 		if ( count( $pair ) === 2 ) {
@@ -170,6 +186,7 @@ function extractOptions( $options ) {
 			$results[$name] = true;
 		}
 	}
+	
 	return $results;
 }
 

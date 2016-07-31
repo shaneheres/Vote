@@ -1,3 +1,5 @@
 .votero { color:#B0B0B0; }
 .votero:hover { color:#0B0B0B; }
+.votero-delete { color:#B0B0B0; }
+.votero-delete:hover { color:#0B0B0B; }
 .votero-selected.votero { color:inherit; }

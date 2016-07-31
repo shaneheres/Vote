@@ -2,38 +2,42 @@
 // Called by javascript.
 // Places a vote, if the user is allowed and the attribute exists.
 $wgAjaxExportList[] = 'wfVoteroClick';
-function wfVoteroClick($page, $attribute, $vote) {
+function wfVoteroClick($pageID, $attributeID, $vote) {
 	global $wgUser;
 	
-	if (!is_numeric($page) or !is_numeric($vote)) {
-		return json_encode(array("CHECK", !is_numeric($page), !is_numeric($vote)));
+	// User pased an illegal page/attribute id.
+	if (!is_numeric($pageID) or !is_numeric($attributeID) or !is_numeric($vote) or $pageID == -1 or $attributeID == -1) {
+		return json_encode(array(is_numeric($pageID), is_numeric($attributeID), is_numeric($vote), $pageID, $attributeID));
 	}
 	
+	// User doesn't have that rite.
 	if (!$wgUser->isAllowed('votero')) {
 		return "not allowed to vote";
 	}
 	
-	$error = Votero::KeyAttributeExists($attribute);
-	if ($error != "true") {
-		return $error;
+	// Attribute doesn't exist.
+	$attribute = Votero::GetAttributeName($attributeID);
+	if ($attribute == "false") {
+		return "{$attribute} isn't an allowable attribute.";
 	}
 	
-	$votero = new Votero($page, $attribute);
+	// Place vote and return error message, if any.
+	$votero = new Votero($pageID, $attribute);
 	return json_encode($votero->placeVote($vote));
 }
 
 // Called in Special:Votero
 $wgAjaxExportList[] = 'wfVoteroSpecialUpdateA';
-function wfVoteroSpecialUpdateA($attributeName) {
+function wfVoteroSpecialUpdateA($attribute) {
 	global $wgUser, $wgVoteroAttributes;
 	
 	if (!in_array($attributeName, array_keys($wgVoteroAttributes)))
-		return "{$attributeName} isn't an allowable attribute.";
+		return "{$attribute} isn't an allowable attribute.";
 	
 	if (!$wgUser->isAllowed('voteroadmin'))
 		return "You don't have permission for that.";
 	
-	return Votero::UpdateAttribute($attributeName);
+	return Votero::UpdateAttribute($attribute);
 }
 
 // Called in Special:Votero

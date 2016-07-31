@@ -6,6 +6,7 @@ VERSION 0.3
 **sorton (optional trait to sort on. can use 'votes', 'average', 'weighted' (default.))
 **decimals (format the average with X decimal places. 0-4)
 **special (values (recent, similar, disimilar) shows similar pages (bassed on an attribute and other peoples rating))
+**stars 
 *Added $wgVoteroVotesTillUpdate which can be set to prevent calculating page averages till after a set number of votes have been added.
 *range display option
 
